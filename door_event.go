@@ -13,12 +13,12 @@ const (
 )
 
 type DoorEvent struct {
-	uuid      string
-	roomUuid  string
-	timestamp time.Time
+	uuid      uuid.UUID
+	roomSlug  string
+	Timestamp time.Time
 	state     DoorState
 }
 
-func createDoorEvent(roomUuid string, timestamp time.Time, state DoorState) (event DoorEvent) {
-	return DoorEvent{uuid: uuid.New(), roomUuid: roomUuid, timestamp: timestamp, state: state}
+func createDoorEvent(roomSlug string, Timestamp time.Time, state DoorState) (event DoorEvent) {
+	return DoorEvent{uuid: uuid.NewRandom(), roomSlug: roomSlug, Timestamp: Timestamp, state: state}
 }

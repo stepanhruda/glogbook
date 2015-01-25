@@ -21,6 +21,12 @@ func main() {
 	})
 
 	mux.HandleFunc("/door_events", func(w http.ResponseWriter, req *http.Request) {
+		// API ENDPOINT: '/door_events'
+		// PARAMS:
+		// room_uuid: string
+		// timestamp: rfc3339 timestamp i.e. "2006-01-02T15:04:05Z"
+		// door_state: one of the values from the DoorState const
+
 		roomUuid := req.FormValue("room_uuid")
 		timestamp := req.FormValue("timestamp")
 		time, err := time.Parse(time.RFC3339, timestamp)
