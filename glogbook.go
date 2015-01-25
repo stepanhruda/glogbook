@@ -7,6 +7,7 @@ import (
 	"github.com/garyburd/redigo/redis"
 	"github.com/unrolled/render"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -15,10 +16,7 @@ func main() {
 	r := render.New()
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-		rooms := []Room{
-			Room{Uuid: uuid.NewRandom(), LastEventTimestamp: time.Now(), LastEventState: "open", Name: "Foo"},
-			Room{Uuid: uuid.NewRandom(), LastEventTimestamp: time.Now(), LastEventState: "open", Name: "Bar"},
-		}
+		rooms, _ := loadRooms()
 		r.HTML(w, http.StatusOK, "dashboard", rooms)
 	})
 
@@ -33,6 +31,7 @@ func main() {
 		doorState := DoorState(req.FormValue("door_state"))
 		doorEvent := createDoorEvent(roomUuid, time, doorState)
 		saveEvent(doorEvent)
+		fmt.Fprintf(w, "door event saved")
 	})
 
 	n := negroni.Classic()
@@ -55,5 +54,26 @@ func saveEvent(doorEvent DoorEvent) (err error) {
 	c.Receive()
 	c.Receive()
 
+	return
+}
+
+func loadRooms() (rooms []Room, err error) {
+	c, err := redis.Dial("tcp", ":6379")
+	if err != nil {
+		return nil, err
+	}
+	defer c.Close()
+
+	roomKeysQuery := "room:*"
+	roomKeys, err := redis.Strings(c.Do("KEYS", roomKeysQuery))
+	for _, key := range roomKeys {
+		parts := strings.Split(key, "room:")
+
+		roomUuid := parts[len(parts)-1]
+		roomValues, _ := redis.Strings(c.Do("HGETALL", key))
+		time, _ := time.Parse(time.RFC3339, roomValues[1])
+		room := Room{Uuid: uuid.Parse(roomUuid), LastEventTimestamp: time, Name: roomUuid, LastEventState: DoorState(roomValues[3])}
+		rooms = append(rooms, room)
+	}
 	return
 }
