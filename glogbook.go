@@ -19,6 +19,11 @@ func main() {
 		r.HTML(w, http.StatusOK, "dashboard", rooms)
 	})
 
+	mux.HandleFunc("/rooms", func(w http.ResponseWriter, req *http.Request) {
+		rooms, _ := loadRooms()
+		r.JSON(w, http.StatusOK, map[string][]Room{"rooms": rooms})
+	})
+
 	mux.HandleFunc("/door_events", func(w http.ResponseWriter, req *http.Request) {
 		// API ENDPOINT: '/door_events'
 		// PARAMS:
@@ -36,7 +41,7 @@ func main() {
 		doorState := DoorState(req.FormValue("door_state"))
 		doorEvent := createDoorEvent(roomSlug, time, doorState)
 		saveEvent(doorEvent)
-		fmt.Fprintf(w, "door event saved")
+		r.JSON(w, http.StatusCreated, doorEvent)
 	})
 
 	n := negroni.Classic()
@@ -51,10 +56,10 @@ func saveEvent(doorEvent DoorEvent) (err error) {
 	}
 	defer c.Close()
 
-	eventKey := fmt.Sprintf("doorEvent:%s", doorEvent.uuid)
-	roomKey := fmt.Sprintf("room:%s", doorEvent.roomSlug)
-	c.Send("HMSET", eventKey, "roomSlug", doorEvent.roomSlug, "timestamp", doorEvent.Timestamp, "state", doorEvent.state)
-	c.Send("HMSET", roomKey, "lastEventTimestamp", doorEvent.Timestamp, "lastEventState", doorEvent.state)
+	eventKey := fmt.Sprintf("doorEvent:%s", doorEvent.Uuid)
+	roomKey := fmt.Sprintf("room:%s", doorEvent.RoomSlug)
+	c.Send("HMSET", eventKey, "roomSlug", doorEvent.RoomSlug, "timestamp", doorEvent.Timestamp, "doorState", doorEvent.DoorState)
+	c.Send("HMSET", roomKey, "lastEventTimestamp", doorEvent.Timestamp, "lastEventState", doorEvent.DoorState)
 	c.Flush()
 	c.Receive()
 	c.Receive()

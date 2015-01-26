@@ -5,8 +5,8 @@ import (
 )
 
 type Room struct {
-	LastEventTimestamp time.Time
-	LastEventState     DoorState
-	Name               string
-	Slug               string
+	LastEventTimestamp time.Time `json:"last_event_timestamp"`
+	LastEventState     DoorState `json:"last_event_state"`
+	Name               string    `json:"name"`
+	Slug               string    `json:"id"`
 }

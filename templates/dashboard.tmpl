@@ -1,5 +1,7 @@
 {{range $index, $room := . }}
-  Hello from {{$room.Name}}
+  Room: {{$room.Name}}
   <br>
   Current state: {{$room.LastEventState}}
+  <br>
+  <br>
 {{end}}
